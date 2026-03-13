@@ -24,11 +24,11 @@ All the information you need — setup instructions, code examples, and assignme
 
 ```
 bumblebee-students/
-├── tasks/          # Learning assignments
-├── examples/       # Example flight scripts
-├── simulation/     # Simulator setup instructions
+├── tasks/                           # Learning assignments
+├── examples/                        # Example flight scripts
+├── simulation/                      # Simulator setup instructions
 ├── system-images-for-bumblebee/     # Simulator setup instructions
-└── README.md       # This file
+└── README.md                        # This file
 ```
 
 ## Need Help?
