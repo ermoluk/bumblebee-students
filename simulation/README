@@ -1,0 +1,15 @@
+# 🖥️ Simulation
+
+This folder contains instructions and configuration files for setting up the Bumblebee simulator.
+
+The simulator runs on **Ubuntu 20.04** using ROS Noetic and Gazebo.
+
+For the full setup guide:
+👉 **[Bumblebee Students Wiki](https://github.com/ermoluk/bumblebee-students/wiki)**
+
+## Quick Start
+
+```bash
+# Launch the simulator
+roslaunch bumblebee_simulation simulator.launch
+```
