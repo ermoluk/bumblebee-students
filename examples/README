@@ -1,0 +1,8 @@
+# 💡 Examples
+
+This folder contains example flight scripts for the Bumblebee platform.
+
+Use these as a reference when working on your assignments. All examples are written in Python and tested in the Gazebo simulator.
+
+Full documentation and explanations are in the wiki:
+👉 **[Bumblebee Students Wiki](https://github.com/ermoluk/bumblebee-students/wiki)**
