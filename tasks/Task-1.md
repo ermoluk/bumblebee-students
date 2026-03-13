@@ -22,7 +22,7 @@ rosrun bumblebee_bridge task1_led_blink.py
 # Stop: Ctrl+C — LEDs will turn off automatically
 ```
 
-## Code — task1_led_blink.py
+## Code — task1_led.py
 
 ```python
 #!/usr/bin/env python3
