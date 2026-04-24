@@ -12,3 +12,6 @@ Pre-built OS images for Bumblebee's Raspberry Pi
 | v0.3.2R | 31.03.2026 | Transfer to ros2 | [📥 Download](https://mega.nz/folder/Bxo3xCya#sF_MRzxOORWsrYDDb4YXkA)|
 | v0.4.2R | 02.04.2026 | LED backlighting works, Aruca fix | [📥 Download](https://mega.nz/folder/8wg32DqL#GeyWsJYqjlHuBw70rTa7mA)|
 | v0.5.2R | 09.04.2026 | Autonomous flights, safety systems, servo and wheel module control are in operation | [📥 Download](https://mega.nz/folder/ppBDST5D#CjFqRujbjfzJnbNvFUEoFQ)|
+
+
+https://mega.nz/file/0xw31ZrL#V8Nx0mT0K6JUYDqCCeYy6kkSmB2BDESANO9GfAUUYl0
