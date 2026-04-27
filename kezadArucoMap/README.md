@@ -11,12 +11,13 @@ The map consists of **7 markers** placed across the polygon floor. All positions
 ```
 # id    length    x       y      z    rot_z   rot_y   rot_x
 0       0.19      0       0      0    1.571    0       0
-1       0.29      0       1.88   0    1.571    0       0
-2       0.29      0       3.64   0    1.571    0       0
-3       0.29      0       5.40   0    1.571    0       0
-11      0.29     -1.95    1.88   0    1.571    0       0
-12      0.29     -1.95    3.64   0    1.571    0       0
-13      0.29     -1.95    5.40   0    1.571    0       0
+1       0.29      0       0.7    0    1.571    0       0
+2       0.29      0       1.4    0    1.571    0       0
+3       0.29      0       2.1    0    1.571    0       0
+11      0.29     -1.0     0.7    0    1.571    0       0
+12      0.29     -1.0     1.4    0    1.571    0       0
+13      0.29     -1.0     2.1    0    1.571    0       0
+
 ```
 
 All markers lie flat on the floor (`z = 0`) and are rotated 90° around the Z axis (`rot_z = 1.571 rad`) to match the expected orientation of the `aruco_pose` package.
