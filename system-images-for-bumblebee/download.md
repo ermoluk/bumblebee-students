@@ -14,4 +14,4 @@ Pre-built OS images for Bumblebee's Raspberry Pi
 | v0.5.2R | 09.04.2026 | Autonomous flights, safety systems, servo and wheel module control are in operation | [📥 Download](https://mega.nz/folder/ppBDST5D#CjFqRujbjfzJnbNvFUEoFQ)|
 
 
-https://mega.nz/file/0xw31ZrL#V8Nx0mT0K6JUYDqCCeYy6kkSmB2BDESANO9GfAUUYl0
+https://drive.google.com/file/d/1-_z7CbMMCkwb0HPJAYSvQSgONWzAh4Yj/view?usp=share_link
