@@ -1,0 +1,13 @@
+[Unit]
+Description=Bumblebee drone identity (hostname + Bonjour service record)
+Documentation=file:/home/lb/ros2_ws/src/bumblebee/scripts/set_identity.sh
+After=network-online.target NetworkManager.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/home/lb/ros2_ws/src/bumblebee/scripts/set_identity.sh
+
+[Install]
+WantedBy=multi-user.target

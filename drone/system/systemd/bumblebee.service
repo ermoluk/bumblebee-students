@@ -1,0 +1,18 @@
+[Unit]
+Description=Bumblebee ROS2 Launch
+After=network.target
+
+[Service]
+Type=simple
+User=lb
+WorkingDirectory=/home/lb
+ExecStartPre=+/usr/bin/chgrp dialout /dev/ttyAMA0
+ExecStartPre=+/usr/bin/chmod 660 /dev/ttyAMA0
+ExecStart=/home/lb/start_bumblebee.sh
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/tmp/bumblebee.log
+StandardError=append:/tmp/bumblebee.log
+
+[Install]
+WantedBy=multi-user.target

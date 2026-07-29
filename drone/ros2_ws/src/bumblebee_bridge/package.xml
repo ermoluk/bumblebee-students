@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>bumblebee_bridge</name>
+  <version>0.0.2</version>
+  <description>Driver for Bumblebee board via I2C (ROS 2)</description>
+  <maintainer email="user@todo.todo">user</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>mavros_msgs</depend>
+
+  <exec_depend>python3-smbus2</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

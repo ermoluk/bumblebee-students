@@ -35,8 +35,10 @@ All the information you need — setup instructions, code examples, and assignme
 bumblebee-students/
 ├── lectures/                        # Lecture slides and Python notebook
 ├── tasks/                           # Learning assignments
-├── examples/                        # Example flight scripts
-├── simulation/                      # Simulator overview and quick start
+├── examples/                        # Example flight scripts + drone.py API
+├── drone/                           # On-board source code (ROS 2 workspace + system files)
+├── simulation/                      # Simulator source code and Windows installer scripts
+├── gcs/                             # Ground Control Station source code (macOS + Windows)
 ├── system-images-for-bumblebee/     # Raspberry Pi SD card images for the drone
 ├── PX4_bin/                         # PX4 firmware binaries for the flight controller
 ├── PX4_parameters/                  # PX4 parameter snapshots

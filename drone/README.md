@@ -1,0 +1,27 @@
+# 🛠️ Drone Source Code
+
+The complete on-board software of the Bumblebee drone, extracted from the official SD card image (`030726`, see [SD Card Image](https://github.com/futureLabKezad/bumblebee-students/wiki/SD‐Card‐Image)). On the drone this lives in `/home/lb/ros2_ws/src`.
+
+## Layout
+
+| Path | What it is |
+| --- | --- |
+| `ros2_ws/src/bumblebee/` | Main package: C++ flight core `simple_offboard`, launch files, `scripts/` (wifi manager, LED, sys metrics), `examples/` (drone.py), web dashboard `www/` |
+| `ros2_ws/src/aruco_pose/` | ArUco marker detection and map-based pose estimation |
+| `ros2_ws/src/bumblebee_bridge/` | I2C bridge to the ATtiny companion (LED strips, gripper servo, wheel) |
+| `ros2_ws/src/bumblebee_description/` | URDF model and meshes of the drone |
+| `system/systemd/` | systemd units: `bumblebee.service`, wifi manager/watchdog, LED, metrics, I2C recovery |
+| `system/start_bumblebee.sh` | Entry point started by `bumblebee.service` |
+| `system/mavros_params.yaml` | MAVROS configuration (`/home/lb/mavros_params.yaml` on the drone) |
+| `system/i2c_recover.sh` | I2C bus recovery run at boot (`/usr/local/sbin/` on the drone) |
+
+## Building on the drone
+
+```bash
+ssh lb@<drone-ip>            # password: lb
+source /opt/ros/jazzy/setup.bash
+cd ~/ros2_ws
+colcon build --symlink-install --packages-select bumblebee
+```
+
+How it all fits together: [System Architecture](https://github.com/futureLabKezad/bumblebee-students/wiki/System‐Architecture) · [Launch Pipeline](https://github.com/futureLabKezad/bumblebee-students/wiki/Launch‐Pipeline) · [System Services](https://github.com/futureLabKezad/bumblebee-students/wiki/System‐Services)

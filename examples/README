@@ -1,8 +1,32 @@
 # 💡 Examples
 
-This folder contains example flight scripts for the Bumblebee platform.
+Example flight scripts for the Bumblebee platform, extracted from the drone's system image. Use these as a reference when working on your assignments — the same code runs on the real drone and in the Gazebo simulator.
 
-Use these as a reference when working on your assignments. All examples are written in Python and tested in the Gazebo simulator.
+| Path | What's inside |
+| --- | --- |
+| `drone.py` | The flight API itself — `takeoff`, `fly_to`, `move`, `hover`, `safe_land`, LEDs, sounds, servo ([full reference](https://github.com/futureLabKezad/bumblebee-students/wiki/Drone‐Py‐API)) |
+| `flight_profile.py` | Centralized speed/timeout profiles used by drone.py |
+| `flight/flight.py` | Minimal full flight: takeoff → hover → precision land |
+| `flight/flight_marker.py` | Navigate to an ArUco marker and land on it |
+| `flight/flight_marker_loop.py` | Loop over several markers |
+| `flight/navigate_wait.py` | Low-level `navigate_wait` usage |
+| `flight/example_flight.py` | Multi-waypoint mission |
+| `animations/` | LED strip animations (fire, police, rainbow, strobe, …) |
+| `misc/` | Small utilities: telemetry, camera, ArUco check, LED, servo, tunes, preflight |
 
-Full documentation and explanations are in the wiki:
-👉 **[Bumblebee Students Wiki](https://github.com/futureLabKezad/bumblebee-students/wiki)**
+## Running
+
+**In the simulator** (see [Gazebo Setup (Windows)](https://github.com/futureLabKezad/bumblebee-students/wiki/Gazebo‐Setup‐(Windows))):
+
+```bash
+sim-run flight.py
+```
+
+**On the real drone** — copy the script over and run it with Python:
+
+```bash
+scp flight/flight.py lb@<drone-ip>:~/
+ssh lb@<drone-ip> python3 flight.py
+```
+
+Full documentation: [Programming Introduction](https://github.com/futureLabKezad/bumblebee-students/wiki/Programming‐Introduction) · [Code Examples](https://github.com/futureLabKezad/bumblebee-students/wiki/Code‐Examples)

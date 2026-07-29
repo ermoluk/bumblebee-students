@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>bumblebee_sim</name>
+  <version>0.1.0</version>
+  <description>
+    Gazebo Harmonic + PX4 SITL overlay for the Bumblebee drone stack.
+    Provides a sim-only launch file, ArUco world, marker models, and Python
+    shims that let production flight scripts run without real hardware.
+  </description>
+  <maintainer email="lb@bumblebee.local">Bumblebee</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Production package — sim launch reuses simple_offboard, aruco_detect.py, etc. -->
+  <exec_depend>bumblebee</exec_depend>
+
+  <exec_depend>mavros</exec_depend>
+  <exec_depend>rosbridge_server</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>tf2_web_republisher</exec_depend>
+  <exec_depend>ros_gz_image</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>ros_gz_sim</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

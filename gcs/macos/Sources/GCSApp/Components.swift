@@ -1,0 +1,330 @@
+import SwiftUI
+
+// MARK: - Panel
+
+/// Titled card with an SF Symbol header.
+struct Panel<Content: View>: View {
+    let title: String
+    var icon: String? = nil
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.s3) {
+            HStack(spacing: Theme.s2) {
+                if let icon { Image(systemName: icon).font(.system(size: Theme.iconSm)).foregroundStyle(Theme.muted) }
+                Text(title.uppercased())
+                    .font(Theme.sectionLbl).tracking(1.1)
+                    .foregroundStyle(Theme.muted)
+                Spacer(minLength: 0)
+            }
+            content
+        }
+        .padding(Theme.s4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassCard(Theme.rPanel)
+        .cardShadow()
+    }
+}
+
+// MARK: - StatTile (hero row)
+
+struct StatTile: View {
+    let label: String
+    let value: String
+    var icon: String
+    var color: Color = Theme.text
+
+    var body: some View {
+        HStack(spacing: Theme.s3) {
+            ZStack {
+                RoundedRectangle(cornerRadius: Theme.rControl).fill(color.opacity(0.15))
+                Image(systemName: icon).font(.system(size: Theme.iconMd, weight: .semibold)).foregroundStyle(color)
+            }
+            .frame(width: 34, height: 34)
+            VStack(alignment: .leading, spacing: Theme.s0 - 1) {
+                Text(label.uppercased()).font(Theme.sectionLbl).tracking(0.8).foregroundStyle(Theme.muted)
+                Text(value).font(Theme.statValue).foregroundStyle(Theme.text)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, Theme.s3).padding(.vertical, Theme.s2 + 2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassCard(Theme.rPanel)
+    }
+}
+
+// MARK: - Status dot
+
+struct StatusDot: View {
+    let color: Color
+    var pulsing = false
+    @State private var on = false
+    var body: some View {
+        Circle()
+            .fill(color)
+            .frame(width: 8, height: 8)
+            .overlay(Circle().stroke(color.opacity(0.35), lineWidth: on ? 6 : 0))
+            .animation(pulsing ? .easeInOut(duration: 1).repeatForever(autoreverses: true) : .default, value: on)
+            .onAppear { if pulsing { on = true } }
+    }
+}
+
+// MARK: - Readouts & bars
+
+struct Readout: View {
+    let label: String
+    let value: String
+    var color: Color = Theme.text
+    var body: some View {
+        HStack {
+            Text(label).font(Theme.monoSmall).foregroundStyle(Theme.muted)
+            Spacer()
+            Text(value).font(Theme.value).foregroundStyle(color)
+        }
+    }
+}
+
+struct LabeledBar: View {
+    let label: String
+    let value: String
+    let pct: Double
+    var color: Color = Theme.primary
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.s1) {
+            HStack {
+                Text(label).font(Theme.monoSmall).foregroundStyle(Theme.muted)
+                Spacer()
+                Text(value).font(Theme.monoSmall).foregroundStyle(Theme.text)
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Theme.hairline)
+                    Capsule().fill(color)
+                        .frame(width: geo.size.width * CGFloat(max(0, min(100, pct)) / 100))
+                }
+            }
+            .frame(height: 6)
+        }
+    }
+}
+
+struct Badge: View {
+    let text: String
+    let color: Color
+    var body: some View {
+        Text(text)
+            .font(Theme.badge)
+            .padding(.horizontal, Theme.s2).padding(.vertical, Theme.s1 - 1)
+            .background(color.opacity(0.16))
+            .foregroundStyle(color)
+            .clipShape(Capsule())
+    }
+}
+
+// MARK: - Drone card (launch screen)
+
+struct DroneCard: View {
+    let name: String
+    let ip: String
+    var reachable = true
+    var isLast = false
+    let action: () -> Void
+    @State private var hover = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: Theme.s3) {
+                StatusDot(color: reachable ? Theme.ok : Theme.muted)
+                VStack(alignment: .leading, spacing: Theme.s0) {
+                    HStack(spacing: Theme.s1 + 2) {
+                        Text(name).font(Theme.bodyStrong).foregroundStyle(Theme.text)
+                        if isLast { Badge(text: "LAST", color: Theme.caution) }
+                    }
+                    Text("\(ip)  ·  rosbridge :9090").font(Theme.monoSmall).foregroundStyle(Theme.muted)
+                }
+                Spacer()
+                Text("Connect").font(Theme.bodyMed).foregroundStyle(Theme.primary)
+                Image(systemName: "chevron.right").font(.system(size: Theme.iconSm, weight: .semibold)).foregroundStyle(Theme.muted)
+            }
+            .padding(.horizontal, Theme.s4).padding(.vertical, Theme.s3)
+            .background(hover ? Theme.hoverBg : .clear, in: RoundedRectangle(cornerRadius: Theme.rControl))
+            .glassCard(Theme.rControl)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hover = $0 }
+    }
+}
+
+// MARK: - Button styles
+
+struct AccentButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Theme.button)
+            .padding(.horizontal, Theme.s4).padding(.vertical, Theme.s2 + 1)
+            .background(Theme.primary.opacity(configuration.isPressed ? 0.7 : 1))
+            .foregroundStyle(.white)
+            .clipShape(RoundedRectangle(cornerRadius: Theme.rControl))
+    }
+}
+
+struct GhostButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Theme.buttonSm)
+            .padding(.horizontal, Theme.s3).padding(.vertical, Theme.s2)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: Theme.rControl))
+            .foregroundStyle(Theme.text)
+            .overlay(RoundedRectangle(cornerRadius: Theme.rControl).stroke(Theme.ghostStroke, lineWidth: 1))
+            .clipShape(RoundedRectangle(cornerRadius: Theme.rControl))
+            .opacity(configuration.isPressed ? 0.7 : 1)
+            .contentShape(Rectangle())
+    }
+}
+
+func pctOf(_ v: Double, _ max: Double) -> Double { min(100, abs(v) / max * 100) }
+
+// MARK: - Glass input field
+
+/// The single frosted text-input look used app-wide (replaces stock
+/// `.roundedBorder`). Optional leading SF Symbol and a secure variant.
+struct GlassTextField: View {
+    let placeholder: String
+    @Binding var text: String
+    var icon: String? = nil
+    var secure = false
+    var onSubmit: (() -> Void)? = nil
+
+    var body: some View {
+        HStack(spacing: Theme.s2) {
+            if let icon { Image(systemName: icon).foregroundStyle(Theme.muted) }
+            Group {
+                if secure {
+                    SecureField(placeholder, text: $text)
+                } else {
+                    TextField(placeholder, text: $text)
+                }
+            }
+            .textFieldStyle(.plain)
+            .font(Theme.value)
+            .onSubmit { onSubmit?() }
+        }
+        .padding(.horizontal, Theme.s3).padding(.vertical, Theme.s2 + 1)
+        .glassCard(Theme.rControl)
+    }
+}
+
+extension View {
+    /// Wrap an arbitrary control in the glass-field chrome (e.g. a menu Picker).
+    func glassField() -> some View {
+        padding(.horizontal, Theme.s3).padding(.vertical, Theme.s2 - 2)
+            .glassCard(Theme.rControl)
+    }
+}
+
+// MARK: - Chip button & segmented tabs
+
+/// Toggle chip — blue when selected, faint when not. Shared by the camera tabs
+/// and the LED animation grid.
+struct ChipButton: View {
+    let label: String
+    var selected: Bool
+    var fullWidth = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(Theme.chip)
+                .frame(maxWidth: fullWidth ? .infinity : nil)
+                .padding(.horizontal, Theme.s3).padding(.vertical, Theme.s1 + 1)
+                .background(selected ? Theme.selectionBg : Theme.fillFaint,
+                            in: RoundedRectangle(cornerRadius: Theme.rControl))
+                .foregroundStyle(selected ? Theme.primary : Theme.muted)
+                .contentShape(RoundedRectangle(cornerRadius: Theme.rControl))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// A row of `ChipButton`s bound to a selection — a glass-consistent segmented
+/// control replacing stock `Picker` for small option sets.
+struct SegmentedTabs<T: Hashable>: View {
+    let options: [(label: String, value: T)]
+    @Binding var selection: T
+    var fullWidth = false
+
+    var body: some View {
+        HStack(spacing: Theme.s1 + 2) {
+            ForEach(options, id: \.value) { opt in
+                ChipButton(label: opt.label, selected: selection == opt.value, fullWidth: fullWidth) {
+                    selection = opt.value
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Status banner
+
+/// Shared inline status / toast line replacing ad-hoc per-screen strings.
+struct StatusBanner: View {
+    enum Kind { case info, success, caution, error }
+    let text: String
+    var kind: Kind = .info
+
+    private var color: Color {
+        switch kind {
+        case .info: return Theme.muted
+        case .success: return Theme.ok
+        case .caution: return Theme.caution
+        case .error: return Theme.danger
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: Theme.s2) {
+            Image(systemName: icon).font(.system(size: Theme.iconSm)).foregroundStyle(color)
+            Text(text).font(Theme.monoSmall).foregroundStyle(color)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, Theme.s3).padding(.vertical, Theme.s2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: Theme.rControl))
+    }
+
+    private var icon: String {
+        switch kind {
+        case .info: return "info.circle"
+        case .success: return "checkmark.circle"
+        case .caution: return "exclamationmark.triangle"
+        case .error: return "xmark.octagon"
+        }
+    }
+}
+
+// MARK: - Liquid glass surface
+
+extension View {
+    /// Frosted material with a gradient edge highlight (brighter at the top) —
+    /// the Liquid Glass look without tinting the content.
+    func glassCard(_ radius: CGFloat) -> some View {
+        self
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: radius))
+            .overlay(
+                RoundedRectangle(cornerRadius: radius)
+                    .strokeBorder(
+                        LinearGradient(colors: [Theme.edgeHi, Theme.edgeLo],
+                                       startPoint: .top, endPoint: .bottom),
+                        lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: radius))
+    }
+
+    /// Uniform card elevation — one shadow depth across every glass surface.
+    func cardShadow() -> some View {
+        shadow(color: Theme.shadowColor, radius: Theme.shadowRadius, y: Theme.shadowY)
+    }
+}

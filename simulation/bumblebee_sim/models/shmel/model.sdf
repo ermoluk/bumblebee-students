@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<sdf version="1.10">
+  <model name="shmel">
+    <static>true</static>
+    <link name="body">
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>meshes/shmel.obj</uri>
+            <scale>1.0 1.0 1.0</scale>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>

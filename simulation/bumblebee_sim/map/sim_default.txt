@@ -1,0 +1,13 @@
+# id  length  x     y     z      rot_z   rot_y   rot_x
+# Default sim ArUco map. Layout matches worlds/clover_aruco.sdf:
+#   id 0 on the landing pad at the origin;
+#   row 0 (y=0.0): ids 1  2  3  at x = 1.5, 1.9, 2.3
+#   row 1 (y=0.7): ids 11 12 13 at x = 1.5, 1.9, 2.3
+# Marker planes face +Z (up) so the drone's downward camera sees them.
+0	0.19	0.0	0.0	0.0	0	0	0
+1	0.19	1.5	0.0	0.0	0	0	0
+2	0.19	1.9	0.0	0.0	0	0	0
+3	0.19	2.3	0.0	0.0	0	0	0
+11	0.19	1.5	0.7	0.0	0	0	0
+12	0.19	1.9	0.7	0.0	0	0	0
+13	0.19	2.3	0.7	0.0	0	0	0

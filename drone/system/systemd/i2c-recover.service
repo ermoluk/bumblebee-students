@@ -1,0 +1,12 @@
+[Unit]
+Description=I2C bus recovery (unstick ATtiny slave after reboot)
+After=local-fs.target
+Before=bumblebee.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/i2c_recover.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

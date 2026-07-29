@@ -1,0 +1,110 @@
+using System.Runtime.InteropServices;
+using BumblebeeGcs.Theme;
+using BumblebeeGcs.Views;
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Input;
+using Windows.System;
+
+namespace BumblebeeGcs;
+
+public sealed partial class MainWindow : Window
+{
+    private bool _booted;
+
+    [DllImport("user32.dll")]
+    private static extern uint GetDpiForWindow(nint hwnd);
+
+    public MainWindow()
+    {
+        InitializeComponent();
+        Title = "Bumblebee GCS";
+        SetupWindowChrome();
+        SetupShortcuts();
+
+        App.State.ConnectedChanged += RefreshRoot;
+        Closed += (_, _) => App.State.ConnectedChanged -= RefreshRoot;
+
+        // Короткий статичный boot-экран; скан сети уже запущен в App.OnLaunched,
+        // так что дроны успевают появиться, пока висит сплэш.
+        RefreshRoot();
+        var timer = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread().CreateTimer();
+        timer.Interval = TimeSpan.FromSeconds(1.3);
+        timer.IsRepeating = false;
+        timer.Tick += (_, _) =>
+        {
+            _booted = true;
+            RefreshRoot();
+        };
+        timer.Start();
+    }
+
+    private void SetupWindowChrome()
+    {
+        var appWindow = AppWindow;
+        try { appWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "AppIcon.ico")); } catch { }
+
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        var scale = GetDpiForWindow(hwnd) / 96.0;
+        try
+        {
+            appWindow.Resize(new Windows.Graphics.SizeInt32((int)(1280 * scale), (int)(820 * scale)));
+            if (appWindow.Presenter is OverlappedPresenter presenter)
+            {
+                presenter.PreferredMinimumWidth = (int)(1100 * scale);
+                presenter.PreferredMinimumHeight = (int)(720 * scale);
+            }
+        }
+        catch { }
+
+        // Тёмный титлбар в тон фону приложения.
+        try
+        {
+            if (AppWindowTitleBar.IsCustomizationSupported())
+            {
+                var tb = appWindow.TitleBar;
+                tb.BackgroundColor = Palette.Bg;
+                tb.InactiveBackgroundColor = Palette.Bg;
+                tb.ForegroundColor = Palette.Text;
+                tb.InactiveForegroundColor = Palette.Muted;
+                tb.ButtonBackgroundColor = Palette.Bg;
+                tb.ButtonInactiveBackgroundColor = Palette.Bg;
+                tb.ButtonForegroundColor = Palette.Text;
+                tb.ButtonInactiveForegroundColor = Palette.Muted;
+                tb.ButtonHoverBackgroundColor = Palette.SurfaceRaised;
+                tb.ButtonHoverForegroundColor = Palette.Text;
+            }
+        }
+        catch { }
+    }
+
+    private void SetupShortcuts()
+    {
+        AddShortcut(VirtualKey.R, VirtualKeyModifiers.Control, () => App.State.Reconnect());
+        AddShortcut(VirtualKey.K, VirtualKeyModifiers.Control, () => App.State.Scanner.Scan());
+        AddShortcut(VirtualKey.D, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift, () => App.State.Disconnect());
+    }
+
+    private void AddShortcut(VirtualKey key, VirtualKeyModifiers mods, Action action)
+    {
+        var acc = new KeyboardAccelerator { Key = key, Modifiers = mods };
+        acc.Invoked += (_, e) =>
+        {
+            action();
+            e.Handled = true;
+        };
+        Root.KeyboardAccelerators.Add(acc);
+    }
+
+    private void RefreshRoot()
+    {
+        Title = App.State.Connected ? $"{App.State.DroneHost} — Bumblebee GCS" : "Bumblebee GCS";
+        Root.Children.Clear();
+        if (!_booted)
+            Root.Children.Add(new SplashView());
+        else if (App.State.Connected)
+            Root.Children.Add(new MainShell(App.State));
+        else
+            Root.Children.Add(new LaunchView(App.State));
+    }
+}
