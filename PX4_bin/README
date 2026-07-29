@@ -1,1 +1,14 @@
+# 🔧 PX4 Firmware Binaries
 
+Firmware binaries for the Bumblebee flight controller (Pixhawk FMU-v6C, board target `px4_fmu-v6c_default`).
+
+| File | Notes |
+| --- | --- |
+| `px4_v1_0_0.bin` | Current firmware build |
+
+## Flashing
+
+In **QGroundControl**: *Vehicle Setup → Firmware → Advanced settings → Custom firmware file* → pick the `.bin`. After flashing, restore the parameter snapshot from `../PX4_parameters/`.
+
+Full procedure (including DFU recovery for a bricked board):
+👉 **[PX4 Firmware — Bumblebee Students Wiki](https://github.com/futureLabKezad/bumblebee-students/wiki/PX4‐Firmware)**

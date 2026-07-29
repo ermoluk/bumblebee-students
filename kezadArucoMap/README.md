@@ -1,6 +1,6 @@
 # ArUco Marker Map — KEZAD Polygon
 
-This repository contains the ArUco marker map for the **KEZAD indoor flight polygon**, used for autonomous navigation with the [Bumblebee](https://github.com/ermoluk/bumblebee-students) drone platform.
+This repository contains the ArUco marker map for the **KEZAD indoor flight polygon**, used for autonomous navigation with the [Bumblebee](https://github.com/futureLabKezad/bumblebee-students) drone platform.
 
 ---
 
@@ -40,6 +40,6 @@ This map can also be used as a **template** for configuring ArUco maps in other 
 
 ## Related
 
-- [Bumblebee Students Repository](https://github.com/ermoluk/bumblebee-students)
+- [Bumblebee Students Repository](https://github.com/futureLabKezad/bumblebee-students)
 - For flashing instructions:
-👉 **[Bumblebee Students Wiki](https://github.com/ermoluk/bumblebee-students/wiki)**
+👉 **[Bumblebee Students Wiki](https://github.com/futureLabKezad/bumblebee-students/wiki)**
