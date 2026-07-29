@@ -1,0 +1,63 @@
+#!/bin/bash
+# sim-run — run a production drone Python script under the sim shim.
+#
+# This is a standalone executable so it works from any shell (login or not).
+# It mirrors what the .bashrc function does, plus auto-sources ROS 2.
+#
+# Usage:
+#   sim-run flight_marker.py
+#   sim-run get_telemetry.py
+#   sim-run /path/to/any/python/script.py
+set -euo pipefail
+
+if [ $# -eq 0 ]; then
+    echo "usage: sim-run <script.py> [args...]" >&2
+    exit 1
+fi
+
+# Source ROS + workspace if not already.
+if [ -z "${AMENT_PREFIX_PATH:-}" ]; then
+    set +u
+    source /opt/ros/jazzy/setup.bash
+    [ -f "$HOME/ros2_ws/install/setup.bash" ] && source "$HOME/ros2_ws/install/setup.bash"
+    set -u
+fi
+
+export RMW_IMPLEMENTATION="${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}"
+
+# Pre-arm ArUco preflight cannot pass on the ground in sim (camera 10 cm above
+# the floor cannot fit a 19 cm marker in frame). Fake the preflight gates;
+# real ArUco detection still runs in flight. Override with =0 to disable.
+export BUMBLEBEE_SIM_FAKE_ARUCO="${BUMBLEBEE_SIM_FAKE_ARUCO:-1}"
+
+# PYTHONPATH for drone_sim shim + production drone.py.
+SIM_SHARE="$(ros2 pkg prefix bumblebee_sim 2>/dev/null)/share/bumblebee_sim"
+EXAMPLES="$HOME/ros2_ws/src/bumblebee/examples"
+export PYTHONPATH="${PYTHONPATH:-}:$SIM_SHARE/python:$EXAMPLES"
+
+# Sim-scaled flight timeouts (RTF < 100% with the GUI open).
+if [ -z "${BUMBLEBEE_FLIGHT_CONFIG:-}" ] && [ -f "$SIM_SHARE/config/flight_config_sim.yaml" ]; then
+    export BUMBLEBEE_FLIGHT_CONFIG="$SIM_SHARE/config/flight_config_sim.yaml"
+fi
+
+SCRIPT="$1"; shift
+
+# Resolve relative paths against examples/ if not absolute.
+if [ ! -f "$SCRIPT" ] && [ -f "$EXAMPLES/$SCRIPT" ]; then
+    SCRIPT="$EXAMPLES/$SCRIPT"
+fi
+
+if [ ! -f "$SCRIPT" ] && [ -f "$EXAMPLES/flight/$SCRIPT" ]; then
+    SCRIPT="$EXAMPLES/flight/$SCRIPT"
+fi
+if [ ! -f "$SCRIPT" ] && [ -f "$EXAMPLES/misc/$SCRIPT" ]; then
+    SCRIPT="$EXAMPLES/misc/$SCRIPT"
+fi
+
+if [ ! -f "$SCRIPT" ]; then
+    echo "sim-run: not found: $SCRIPT" >&2
+    exit 2
+fi
+
+# Auto-import drone_sim before running script (patches drone.py I2C calls).
+exec python3 -c "import drone_sim, runpy; runpy.run_path('$SCRIPT', run_name='__main__')" "$@"

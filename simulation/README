@@ -2,6 +2,11 @@
 
 The Bumblebee simulator lets you fly a virtual drone with the **same `drone.py` API** as the real one: **Gazebo Harmonic** for the 3D world, **PX4 SITL** (v1.16) for the flight stack, and **ROS 2 Jazzy** in between.
 
+This folder now also carries the simulator **source code**:
+
+- `bumblebee_sim/` — the ROS 2 sim package (launch, worlds, models, python shims, scripts). Ships one Gazebo world: `clover_aruco` — grass field, cable towers, landing pad, ArUco markers.
+- `win/` — the Windows installer scripts (`Install-BumblebeeSim.ps1`, `run-sim.bat`, `provision.sh`, …). The big binary bundles (`bumblebee-sim.tar`, `bumblebee_src.tar.gz`) are **not** in git — get them from the download link below.
+
 For the full setup guides:
 
 - 🪟 **Windows** — [Gazebo Setup (Windows)](https://github.com/futureLabKezad/bumblebee-students/wiki/Gazebo‐Setup‐(Windows)) (WSL2, pre-built image, installs in minutes)

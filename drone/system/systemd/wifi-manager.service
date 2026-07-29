@@ -1,0 +1,14 @@
+[Unit]
+Description=Bumblebee WiFi Manager API
+After=network.target NetworkManager.service
+
+[Service]
+# Run as root so we can prepare the log file regardless of prior ownership.
+ExecStartPre=+/bin/bash -c "install -m 0644 -o lb -g lb /dev/null /var/log/wifi-manager-api.log"
+User=lb
+ExecStart=/bin/bash -c "source /opt/ros/jazzy/setup.bash && source /home/lb/ros2_ws/install/setup.bash && exec /usr/bin/python3 /home/lb/ros2_ws/src/bumblebee/scripts/wifi_manager.py"
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

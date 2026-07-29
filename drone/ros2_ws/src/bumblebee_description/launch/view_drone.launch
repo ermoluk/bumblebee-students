@@ -1,0 +1,7 @@
+<launch>
+  <arg name="model" default="$(find bumblebee_description)/urdf/bumblebee/bumblebee4.xacro"/>
+
+  <param name="robot_description" command="xacro $(arg model)"/>
+
+  <node name="rviz" pkg="rviz" type="rviz" required="true"/>
+</launch>

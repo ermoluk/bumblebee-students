@@ -1,0 +1,246 @@
+import Foundation
+import Network
+
+/// Discovers Bumblebee drones on the local network.
+///
+/// Primary path is zero-config **Bonjour/mDNS**: each drone advertises a
+/// `_bumblebee._tcp` service whose instance resolves to an IP and whose TXT
+/// record carries a friendly `name` (e.g. "Bumblebee-4") plus the service
+/// ports. This works on a shared WiFi and over a drone's own hotspot alike,
+/// with no IP typing.
+///
+/// A brute-force /24 subnet scan (rosbridge :9090 probe) stays as a fallback
+/// for drones that are reachable but not yet advertising the service; those
+/// get a name enriched from the metrics endpoint (:8888), falling back to IP.
+@MainActor
+final class DroneScanner: ObservableObject {
+    struct Drone: Identifiable, Equatable {
+        let id: String      // ip, stable
+        var ip: String { id }
+        var name: String
+        /// True when the name/ports came from the drone's Bonjour TXT record —
+        /// a trusted friendly name the subnet-scan enrichment must not clobber.
+        var bonjour: Bool = false
+    }
+
+    @Published private(set) var found: [Drone] = []
+    @Published private(set) var scanning = false
+    /// True once at least one scan has finished — lets the UI tell "haven't
+    /// scanned yet" apart from "scanned and found nothing".
+    @Published private(set) var hasScanned = false
+
+    private let probeQueue = DispatchQueue(label: "gcs.scan", attributes: .concurrent)
+    private let session = URLSession(configuration: .ephemeral)
+    private var bonjour: BonjourDroneBrowser?
+
+    /// Starts continuous Bonjour discovery. Safe to call more than once.
+    func startDiscovery() {
+        guard bonjour == nil else { return }
+        let browser = BonjourDroneBrowser { [weak self] ip, name in
+            Task { @MainActor in self?.upsertBonjour(ip: ip, name: name) }
+        }
+        bonjour = browser
+        browser.start()
+    }
+
+    /// Merge a Bonjour-discovered drone into `found`, keyed by IP. A Bonjour
+    /// name always wins over a subnet-scan placeholder.
+    private func upsertBonjour(ip: String, name: String) {
+        let display = name.isEmpty ? ip : name
+        if let idx = found.firstIndex(where: { $0.id == ip }) {
+            found[idx].name = display
+            found[idx].bonjour = true
+        } else {
+            found.append(Drone(id: ip, name: display, bonjour: true))
+            found.sort { $0.ip.compare($1.ip, options: .numeric) == .orderedAscending }
+        }
+    }
+
+    func scan() {
+        guard !scanning else { return }
+        guard let prefix = Self.localSubnetPrefix() else { hasScanned = true; return }
+        scanning = true
+        found = []
+
+        let group = DispatchGroup()
+        let gate = DispatchSemaphore(value: 48) // cap concurrent sockets
+
+        for i in 1...254 {
+            let ip = "\(prefix)\(i)"
+            group.enter()
+            gate.wait()
+            probe(ip: ip, port: 9090, timeout: 0.6) { open in
+                if open {
+                    Task { @MainActor in self.add(ip: ip) }
+                }
+                gate.signal()
+                group.leave()
+            }
+        }
+
+        group.notify(queue: .main) { [weak self] in
+            self?.scanning = false
+            self?.hasScanned = true
+        }
+    }
+
+    /// One-off reachability check for a single host — is rosbridge (:9090) open?
+    /// Used to color the "last drone" dot (green only when it actually answers).
+    func isReachable(_ ip: String, timeout: TimeInterval = 1.0) async -> Bool {
+        await withCheckedContinuation { cont in
+            probe(ip: ip, port: 9090, timeout: timeout) { open in cont.resume(returning: open) }
+        }
+    }
+
+    private func add(ip: String) {
+        guard !found.contains(where: { $0.id == ip }) else { return }
+        found.append(Drone(id: ip, name: ip))
+        found.sort { $0.ip.compare($1.ip, options: .numeric) == .orderedAscending }
+        enrichName(ip: ip)
+    }
+
+    /// Best-effort: pull a hostname from the metrics JSON for nicer labels.
+    private func enrichName(ip: String) {
+        guard let url = URL(string: "http://\(ip):8888/") else { return }
+        var req = URLRequest(url: url, timeoutInterval: 1.5)
+        req.httpMethod = "GET"
+        session.dataTask(with: req) { data, _, _ in
+            guard let data = data,
+                  let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+            let name = (obj["hostname"] as? String) ?? (obj["name"] as? String)
+            guard let name = name, !name.isEmpty else { return }
+            Task { @MainActor in
+                if let idx = self.found.firstIndex(where: { $0.id == ip }), !self.found[idx].bonjour {
+                    self.found[idx].name = "\(name) (\(ip))"
+                }
+            }
+        }.resume()
+    }
+
+    // MARK: - TCP probe
+
+    private func probe(ip: String, port: UInt16, timeout: TimeInterval, completion: @escaping (Bool) -> Void) {
+        guard let nwPort = NWEndpoint.Port(rawValue: port) else { completion(false); return }
+        let conn = NWConnection(host: NWEndpoint.Host(ip), port: nwPort, using: .tcp)
+        var finished = false
+        let done: (Bool) -> Void = { ok in
+            if finished { return }
+            finished = true
+            conn.cancel()
+            completion(ok)
+        }
+        conn.stateUpdateHandler = { state in
+            switch state {
+            case .ready: done(true)
+            case .failed, .cancelled: done(false)
+            default: break
+            }
+        }
+        conn.start(queue: probeQueue)
+        probeQueue.asyncAfter(deadline: .now() + timeout) { done(false) }
+    }
+
+    // MARK: - Subnet discovery
+
+    /// Returns "x.y.z." for the Mac's primary IPv4 interface, or nil.
+    static func localSubnetPrefix() -> String? {
+        var prefix: String?
+        var ifaddr: UnsafeMutablePointer<ifaddrs>?
+        guard getifaddrs(&ifaddr) == 0, let first = ifaddr else { return nil }
+        defer { freeifaddrs(ifaddr) }
+
+        var ptr: UnsafeMutablePointer<ifaddrs>? = first
+        while let cur = ptr {
+            let flags = Int32(cur.pointee.ifa_flags)
+            let addr = cur.pointee.ifa_addr
+            if let addr = addr,
+               addr.pointee.sa_family == UInt8(AF_INET),
+               (flags & IFF_UP) == IFF_UP,
+               (flags & IFF_LOOPBACK) == 0 {
+                let name = String(cString: cur.pointee.ifa_name)
+                // Prefer wifi (en0) / ethernet (enX) interfaces.
+                if name.hasPrefix("en") {
+                    var host = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                    if getnameinfo(addr, socklen_t(addr.pointee.sa_len),
+                                   &host, socklen_t(host.count),
+                                   nil, 0, NI_NUMERICHOST) == 0 {
+                        let ip = String(cString: host)
+                        let octets = ip.split(separator: ".")
+                        if octets.count == 4 {
+                            prefix = "\(octets[0]).\(octets[1]).\(octets[2])."
+                            break
+                        }
+                    }
+                }
+            }
+            ptr = cur.pointee.ifa_next
+        }
+        return prefix
+    }
+}
+
+/// Bonjour/mDNS browser for the drone's `_bumblebee._tcp` service.
+///
+/// Resolves each discovered service to an IPv4 address and reads the friendly
+/// `name` from its TXT record. Scheduled on the main run loop; results are
+/// forwarded via `onFound(ip, name)`.
+final class BonjourDroneBrowser: NSObject, NetServiceBrowserDelegate, NetServiceDelegate {
+    private let browser = NetServiceBrowser()
+    private var resolving = Set<NetService>()   // retain services during resolve
+    private let onFound: (String, String) -> Void
+
+    init(onFound: @escaping (String, String) -> Void) {
+        self.onFound = onFound
+        super.init()
+        browser.delegate = self
+    }
+
+    func start() { browser.searchForServices(ofType: "_bumblebee._tcp.", inDomain: "local.") }
+    func stop() { browser.stop() }
+
+    // MARK: NetServiceBrowserDelegate
+
+    func netServiceBrowser(_ browser: NetServiceBrowser, didFind service: NetService, moreComing: Bool) {
+        service.delegate = self
+        resolving.insert(service)
+        service.resolve(withTimeout: 5.0)
+    }
+
+    // MARK: NetServiceDelegate
+
+    func netServiceDidResolveAddress(_ sender: NetService) {
+        defer { resolving.remove(sender) }
+        guard let ip = Self.ipv4(from: sender) else { return }
+        onFound(ip, Self.txtName(sender) ?? sender.name)
+    }
+
+    func netService(_ sender: NetService, didNotResolve errorDict: [String: NSNumber]) {
+        resolving.remove(sender)
+    }
+
+    // MARK: Parsing
+
+    private static func txtName(_ service: NetService) -> String? {
+        guard let data = service.txtRecordData() else { return nil }
+        let dict = NetService.dictionary(fromTXTRecord: data)
+        guard let raw = dict["name"], let s = String(data: raw, encoding: .utf8), !s.isEmpty else { return nil }
+        return s
+    }
+
+    private static func ipv4(from service: NetService) -> String? {
+        guard let addresses = service.addresses else { return nil }
+        for data in addresses {
+            let ip: String? = data.withUnsafeBytes { raw in
+                guard let sa = raw.bindMemory(to: sockaddr.self).baseAddress,
+                      sa.pointee.sa_family == UInt8(AF_INET),
+                      let sin = raw.bindMemory(to: sockaddr_in.self).baseAddress else { return nil }
+                var addr = sin.pointee.sin_addr
+                var buf = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
+                inet_ntop(AF_INET, &addr, &buf, socklen_t(INET_ADDRSTRLEN))
+                return String(cString: buf)
+            }
+            if let ip = ip { return ip }
+        }
+        return nil
+    }
+}

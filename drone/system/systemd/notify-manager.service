@@ -1,0 +1,13 @@
+[Unit]
+Description=Bumblebee state-driven LED + buzzer notifications
+After=i2c-recover.service bumblebee.service NetworkManager.service
+Wants=i2c-recover.service
+
+[Service]
+User=lb
+ExecStart=/bin/bash -lc 'source /opt/ros/jazzy/setup.bash && source /home/lb/ros2_ws/install/setup.bash && exec /usr/bin/python3 -u /home/lb/ros2_ws/src/bumblebee/scripts/notify_manager.py'
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

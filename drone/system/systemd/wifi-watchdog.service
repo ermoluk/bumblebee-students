@@ -1,0 +1,13 @@
+[Unit]
+Description=Bumblebee WiFi Watchdog (hotspot fallback)
+After=NetworkManager.service
+Wants=NetworkManager.service
+
+[Service]
+User=root
+ExecStart=/bin/bash /home/lb/ros2_ws/src/bumblebee/scripts/wifi_watchdog.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

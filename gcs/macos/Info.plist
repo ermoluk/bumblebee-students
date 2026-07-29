@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>Bumblebee GCS</string>
+    <key>CFBundleDisplayName</key>
+    <string>Bumblebee GCS</string>
+    <key>CFBundleExecutable</key>
+    <string>GCSApp</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.bumblebee.gcs</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+    <!-- The drone serves plain http (video :8080, metrics :8888, nginx :80) and
+         ws (rosbridge :9090); allow arbitrary loads for this LAN tool. -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
+    <!-- Bonjour discovery + local /24 scan for drones use the local network. -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Bumblebee GCS discovers drones on your local network to connect to.</string>
+    <!-- Bonjour service the drones advertise (_bumblebee._tcp); required for
+         NetService browsing on macOS 14+. -->
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_bumblebee._tcp</string>
+    </array>
+    <!-- CoreWLAN WiFi scan + reading the current SSID (used to auto-join a
+         drone's setup hotspot and hand off WiFi) require location access on
+         macOS 14+. -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Bumblebee GCS reads nearby WiFi networks to find and set up drones over their setup hotspot.</string>
+</dict>
+</plist>

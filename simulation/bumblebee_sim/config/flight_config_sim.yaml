@@ -1,0 +1,140 @@
+# SIM copy of bumblebee/config/flight_config.yaml -- wall-clock timeouts
+# scaled ~3x because the sim runs below real time (RTF ~25% with GUI open).
+# Selected via BUMBLEBEE_FLIGHT_CONFIG in sim-run.
+# flight_config.yaml -- single source of truth for every flight-critical
+# timeout, gate and threshold that used to be hardcoded across drone.py,
+# vpe_fix.py, aruco_detect.py and flight.py (2026-07-13 architecture overhaul).
+#
+# Per-drone overrides: create /home/lb/flight_config.yaml on the drone with
+# ONLY the keys you want to change; it is deep-merged over these defaults.
+# Loader: src/python/flight_config.py (validates cross-value consistency).
+#
+# RULE OF THUMB for editing: watchdog windows must stay LONGER than the vision
+# pipeline's own recovery time (vpe freshness window + gate hysteresis + a few
+# detection periods), otherwise a routine single-frame dropout triggers an
+# emergency landing. flight_config.py enforces the critical inequalities.
+
+detection:
+  # Actual aruco_detect publish rate on RPi5 (frame-dependent).
+  expected_hz: 6.0
+
+aruco:
+  quorum_min_markers: 2
+  vel_limit_mps: 2.5            # reject pose if implied speed exceeds this (multi)
+  vel_limit_single_mps: 1.0     # single-marker limit (2026-06-05: relaxed from 0.7)
+  outlier_pause_s: 0.5          # quiet window after 3 consecutive outliers
+  ippe_ambig_ratio: 1.5
+  single_marker:
+    min_len_m: 0.18
+    max_ndist: 0.40             # normalized distance from image centre (0..1)
+    min_pixels: 50              # max-side bbox in pixels (apparent quality)
+    max_reproj_px: 14.0         # floor of the size-adaptive limit
+    reproj_frac: 0.12           # max err as fraction of marker pixel size
+    reproj_cap_px: 60.0         # absolute ceiling regardless of size
+    lp_alpha: 0.3               # 2026-06-05: reverted to original
+  yaw:
+    lp_alpha: 0.20
+    lock_window_s: 1.5          # continuous multi-marker time before yaw locks
+    lock_single_window_s: 3.0   # 2026-06-05: reverted to original
+    lock_single_spread_deg: 8.0 # 2026-06-05: relaxed back from 5
+    lock_single_samples: 10
+    lock_single_max_dev_deg: 30.0
+    disambig_tol_deg: 30.0      # IPPE candidate must land within yaw_world +- this
+    reset_gap_s: 5.0            # vision silent for this long -> drop the lock
+
+vpe:
+  pos_sigma_m: 0.30             # synthetic covariance when multi-marker cov absent
+  z_sigma_m: 0.30
+  yaw_sigma_rad: 0.05
+  pose_timeout_s: 0.5           # discard aruco poses older than this
+  quality_multi_timeout_s: 1.0  # >=2 markers seen within this window = fresh
+  quality_single_timeout_s: 1.5 # 1 marker + yaw_locked within this = fresh
+  gate_hysteresis_s: 0.5        # coast on stale pose after last vision-ok
+  z_floor_m: -0.30              # reject pose below this
+  z_ceiling_m: 4.0              # reject pose above this
+  z_jump_max_m: 0.30            # reject frame-to-frame |dz| above this
+  xy_jump_max_m: 0.15           # reject frame-to-frame |dxy| above this
+  max_vision_speed_mps: 1.5     # reject implied speed above this
+  reseed:
+    consistent_n: 3             # mutually-consistent rejects needed to reseed
+    window_s: 2.0               # candidates older than this are ignored
+    xy_consist_m: 0.30          # max pairwise XY spread between candidates
+    z_consist_m: 0.25           # max pairwise |dz| between candidates
+    force_rejects: 15           # forced escape (~2.5 s at 6 Hz)
+  param_gate:
+    cache_hot_min: 800          # params in cache to declare HOT
+    cache_hot_timeout_s: 30.0
+    cache_hot_min_timeout: 200  # on timeout, still HOT with at least this many
+    param_set_timeout_s: 6.0
+
+navigation:
+  default_speed_mps: 0.5
+  default_tolerance_m: 0.2
+  adaptive_tolerance_multi_m: 0.15   # >=2 markers in view
+  adaptive_tolerance_single_m: 0.25  # exactly 1 marker
+  timeout_s: 180.0   # sim: RTF ~25% with GUI open, wall-clock scaled
+  poll_period_s: 0.5
+  retry_attempts: 5                  # "No local position" navigate retries
+  # Vision watchdog: markers_used silent for this long while armed ->
+  # graded response (HOLD then AUTO.LAND, see hold_grace_s).
+  vision_timeout_s: 6.0
+  # HOLD phase (2026-07-13): on vision timeout first freeze the setpoint at
+  # the current position and give vision this long to recover (EKF coasts on
+  # IMU+baro; vpe gate is silent anyway). Only then AUTO.LAND. 0 disables.
+  hold_grace_s: 4.0
+  telem_stale_timeout_s: 5.0         # NaN map-frame telemetry -> AUTO.LAND
+  ekf_jump_limit_mps: 3.0            # frame-to-frame implied speed -> AUTO.LAND
+  below_ground_z_m: -0.5             # EKF z below this -> emergency disarm
+  altitude_overshoot_m: 0.6          # z above target by this (map frame) -> AUTO.LAND
+
+takeoff:
+  height_m: 1.5
+  speed_mps: 0.4
+  tolerance_m: 0.15
+  timeout_s: 90.0    # sim: RTF-scaled
+  # Spin-up vibration + marker leaving frame at ground level blank detection
+  # for several seconds routinely -- must far exceed navigation.vision_timeout_s.
+  vision_timeout_s: 25.0
+  mode_switch_wait_s: 3.0
+  telem_settle_wait_s: 1.0
+
+hover:
+  vision_fresh_max_age_s: 1.0
+  vision_watchdog_s: 3.0        # completely silent vision for this long -> land
+
+landing:
+  precision_speed_mps: 0.1
+  precision_tolerance_m: 0.18   # above single-marker XY noise floor (~0.15 m)
+  vision_max_age_s: 3.0         # markers older than this -> straight land
+  timeout_s: 90.0    # sim: RTF-scaled
+  landed_z_max_m: 0.20
+  landed_vz_max_mps: 0.10
+  landed_hold_s: 0.5
+  fall_z_min_m: 0.50            # disarm above this altitude = drone fell
+
+preflight:
+  profile_name: INDOOR_ARUCO_SLOW
+  profile_min_ratio: 0.9
+  require_aruco_min_markers: 1
+  require_aruco_timeout_s: 15.0
+  yaw_lock_timeout_s: 20.0
+  position_stable_secs: 3.0
+  position_stable_tolerance_m: 0.15
+  position_stable_timeout_s: 30.0
+  vpe_link_min_hz: 8.0
+  vpe_link_window_s: 2.0
+  vpe_link_timeout_s: 15.0
+  # Expected PX4 values (read-only check; set via QGC, never written by the
+  # stack). vpe_fix reports actuals in /flight_health.px4; preflight compares.
+  # 2026-07-13: snapshot of drone .4's actual QGC baseline (the old list was
+  # inherited from drone .3 and flagged false drift). OPERATOR REVIEW NOTES:
+  #  - COM_RC_OVERRIDE=1 (was 3 on .3): RC override NOT enabled in offboard.
+  #  - EKF2_EV_CTRL=15 (was 11): EV velocity fusion bit on (no vel published
+  #    by vpe_fix, so it fuses nothing extra; harmless but intentional?).
+  expected_px4_params:
+    COM_RC_OVERRIDE: 1
+    COM_RC_IN_MODE: 0
+    COM_SPOOLUP_TIME: 0
+    COM_DISARM_PRFLT: 30
+    CBRK_IO_SAFETY: 22027
+    EKF2_EV_CTRL: 15
