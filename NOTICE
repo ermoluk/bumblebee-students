@@ -1,0 +1,14 @@
+Bumblebee — Drone Programming Learning Platform
+Copyright 2026 FutureLab
+
+This product includes software developed by FutureLab (https://github.com/futureLabKezad).
+
+This product includes components derived from the Clover project by
+Copter Express Technologies, licensed under the MIT License:
+  - drone/ros2_ws/src/aruco_pose/
+  - parts of drone/ros2_ws/src/bumblebee/ (simple_offboard and related sources)
+Original copyright notices are retained in the affected files.
+
+The web dashboard (drone/ros2_ws/src/bumblebee/www/js/) bundles third-party
+JavaScript libraries (roslib, ros3d and dependencies) under their respective
+licenses; their notices are retained inside the bundled files.
