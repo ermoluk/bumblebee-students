@@ -33,6 +33,7 @@ All the information you need — setup instructions, code examples, and assignme
 
 ```
 bumblebee-students/
+├── lectures/                        # Lecture slides and Python notebook
 ├── tasks/                           # Learning assignments
 ├── examples/                        # Example flight scripts
 ├── simulation/                      # Simulator overview and quick start
