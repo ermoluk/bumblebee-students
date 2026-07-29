@@ -1,15 +1,30 @@
 # 🖥️ Simulation
 
-This folder contains instructions and configuration files for setting up the Bumblebee simulator.
+The Bumblebee simulator lets you fly a virtual drone with the **same `drone.py` API** as the real one: **Gazebo Harmonic** for the 3D world, **PX4 SITL** (v1.16) for the flight stack, and **ROS 2 Jazzy** in between.
 
-The simulator runs on **Ubuntu 20.04** using ROS Noetic and Gazebo.
+For the full setup guides:
 
-For the full setup guide:
-👉 **[Bumblebee Students Wiki](https://github.com/ermoluk/bumblebee-students/wiki)**
+- 🪟 **Windows** — [Gazebo Setup (Windows)](https://github.com/futureLabKezad/bumblebee-students/wiki/Gazebo‐Setup‐(Windows)) (WSL2, pre-built image, installs in minutes)
+- 🍎 **macOS** — [Gazebo Setup (macOS)](https://github.com/futureLabKezad/bumblebee-students/wiki/Bumblebee‐Gazeba‐Setup‐(macOS))
 
-## Quick Start
+## Quick Start (Windows)
+
+1. [Download the simulator bundle](https://futurelab-uae.technology/s/fz3gBzbM4ENPH59) (~3.7 GB) and unpack it.
+2. In PowerShell, inside the unpacked `win-fixed` folder:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File Install-BumblebeeSim.ps1
+```
+
+3. Double-click `run-sim.bat` — the Gazebo window opens in ~60 s.
+4. Fly:
+
+```powershell
+wsl -d BumblebeeSim
+```
 
 ```bash
-# Launch the simulator
-roslaunch bumblebee_simulation simulator.launch
+sim-run flight.py
 ```
+
+Dashboard with the drone camera and telemetry: http://localhost:8000/gcs.html
