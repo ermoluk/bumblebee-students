@@ -46,6 +46,10 @@ bumblebee-students/
 └── README.md                        # This file
 ```
 
+## License
+
+This project is licensed under the **Apache License 2.0** — you are free to use, modify and redistribute the code, provided the FutureLab copyright and the `NOTICE` file are preserved. See [LICENSE](LICENSE) and [NOTICE](NOTICE). Components derived from the Clover project (Copter Express Technologies) keep their original MIT license notices.
+
 ## Need Help?
 
 Check the wiki first - it covers the most common questions. If something isn't working, don't panic: ask your instructor or open an Issue in the repository.
